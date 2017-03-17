@@ -55,9 +55,9 @@ def get_model():
     model = load_model_weights(model, "vgg16_weights.h5")
     
     model.add(Lambda(global_average_pooling, 
-              output_shape=global_average_pooling_shape))
-    model.add(Dense(2, activation = 'softmax', init='uniform'))
-    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.5, nesterov=True)
+              output_shape=global_average_pooling_shape))       # [CAM] VGG‚ÌÅŒã‚ğ‘SŒ‹‡‘w‚Q‚Â‚Ì‘ã‚í‚è‚ÉGAP•t‚É‚µ‚Ä‚¢‚é
+    model.add(Dense(2, activation = 'softmax', init='uniform')) # ÅŒã‚ÉSoftmax
+    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.5, nesterov=True) # Å“K‰»ŠÖ” MomentumSGD
     model.compile(loss = 'categorical_crossentropy', optimizer = sgd, metrics=['accuracy'])
     return model
 
