@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from keras.models import Sequential
 from keras.layers import Convolution2D, ZeroPadding2D, MaxPooling2D
 from keras.layers.core import Flatten, Dense, Dropout, Lambda
@@ -55,14 +58,14 @@ def get_model():
     model = load_model_weights(model, "vgg16_weights.h5")
     
     model.add(Lambda(global_average_pooling, 
-              output_shape=global_average_pooling_shape))       # [CAM] VGG‚ÌÅŒã‚ð‘SŒ‹‡‘w‚Q‚Â‚Ì‘ã‚í‚è‚ÉGAP•t‚É‚µ‚Ä‚¢‚é
-    model.add(Dense(2, activation = 'softmax', init='uniform')) # ÅŒã‚ÉSoftmax
-    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.5, nesterov=True) # Å“K‰»ŠÖ” MomentumSGD
+              output_shape=global_average_pooling_shape))       # [CAM] VGGã®æœ€å¾Œã‚’å…¨çµåˆå±¤ï¼’ã¤ã®ä»£ã‚ã‚Šã«GAPä»˜ã«ã—ã¦ã„ã‚‹
+    model.add(Dense(2, activation = 'softmax', init='uniform')) # æœ€å¾Œã«Softmax
+    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.5, nesterov=True) # æœ€é©åŒ–é–¢æ•° MomentumSGD
     model.compile(loss = 'categorical_crossentropy', optimizer = sgd, metrics=['accuracy'])
     return model
 
 def load_model_weights(model, weights_path):
-    print 'Loading model.'
+    print('Loading model.')
     f = h5py.File(weights_path)
     for k in range(f.attrs['nb_layers']):
         if k >= len(model.layers):
@@ -73,7 +76,7 @@ def load_model_weights(model, weights_path):
         model.layers[k].set_weights(weights)
         model.layers[k].trainable = False
     f.close()
-    print 'Model loaded.'
+    print('Model loaded.')
     return model
 
 def get_output_layer(model, layer_name):

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from keras.models import *
 from keras.callbacks import *
 import keras.backend as K
@@ -6,61 +9,61 @@ from data import *
 import cv2
 import argparse
 
-# ƒgƒŒ[ƒjƒ“ƒO
+# ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°
 def train(dataset_path):
-        # ƒ‚ƒfƒ‹æ“¾
+        # ãƒ¢ãƒ‡ãƒ«å–å¾—
         model = get_model()
         
-        # ƒf[ƒ^ƒZƒbƒgæ“¾
+        # ãƒ‡ãƒ¼ã‚¿ã‚»ãƒƒãƒˆå–å¾—
         X, y = load_inria_person(dataset_path)
         
-        print "Training.."
+        print("Training..")
         
-        # “r’†‚ÌƒZ[ƒu•û–@‚ğw’è
+        # é€”ä¸­ã®ã‚»ãƒ¼ãƒ–æ–¹æ³•ã‚’æŒ‡å®š
         checkpoint_path="weights.{epoch:02d}-{val_loss:.2f}.hdf5"
         checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False, mode='auto')
         
-        # ŠwKƒXƒ^[ƒg
+        # å­¦ç¿’ã‚¹ã‚¿ãƒ¼ãƒˆ
         model.fit(X, y, nb_epoch=40, batch_size=32, validation_split=0.2, verbose=1, callbacks=[checkpoint])
 
-# ‰Â‹‰»
+# å¯è¦–åŒ–
 def visualize_class_activation_map(model_path, img_path, output_path):
-        # ƒ‚ƒfƒ‹‚Ìƒ[ƒh
+        # ãƒ¢ãƒ‡ãƒ«ã®ãƒ­ãƒ¼ãƒ‰
         model = load_model(model_path)
         
-        # ‘ÎÛ‰æ‘œ‚Ì“Ç‚İ
+        # å¯¾è±¡ç”»åƒã®èª­è¾¼ã¿
         original_img = cv2.imread(img_path, 1)
         width, height, _ = original_img.shape
 
-        # ƒŠƒVƒFƒCƒv
+        # ãƒªã‚·ã‚§ã‚¤ãƒ—
         #Reshape to the network input shape (3, w, h).
         img = np.array([np.transpose(np.float32(original_img), (2, 0, 1))])
         
         #Get the 512 input weights to the softmax.
-        class_weights = model.layers[-1].get_weights()[0]     # [CAM] ‚¦[‚ÆHHH
-        final_conv_layer = get_output_layer(model, "conv5_3") # [CAM] ‚¦[‚ÆHHH
-        get_output = K.function([model.layers[0].input], [final_conv_layer.output, model.layers[-1].output]) # [CAM] ‚¦[‚ÆHHH
+        class_weights = model.layers[-1].get_weights()[0]     # [CAM] ãˆãƒ¼ã¨ï¼Ÿï¼Ÿï¼Ÿ
+        final_conv_layer = get_output_layer(model, "conv5_3") # [CAM] ãˆãƒ¼ã¨ï¼Ÿï¼Ÿï¼Ÿ
+        get_output = K.function([model.layers[0].input], [final_conv_layer.output, model.layers[-1].output]) # [CAM] ãˆãƒ¼ã¨ï¼Ÿï¼Ÿï¼Ÿ
         
         # https://keras.io/ja/getting-started/faq/
-        [conv_outputs, predictions] = get_output([img]) # ‰æ‘œ‚ğ“ü—Í!
-        conv_outputs = conv_outputs[0, :, :, :]         # [CAM] ‚¦[‚ÆHHH
+        [conv_outputs, predictions] = get_output([img]) # ç”»åƒã‚’å…¥åŠ›!
+        conv_outputs = conv_outputs[0, :, :, :]         # [CAM] ãˆãƒ¼ã¨ï¼Ÿï¼Ÿï¼Ÿ
 
-        # CAM‚Ì¶¬
+        # CAMã®ç”Ÿæˆ
         # Create the class activation map.
         
-        # ƒ[ƒƒNƒŠƒA
+        # ã‚¼ãƒ­ã‚¯ãƒªã‚¢
         cam = np.zeros(dtype = np.float32, shape = conv_outputs.shape[1:3]) 
         
-        for i, w in enumerate(class_weights[:, 1]): # [CAM] ‚¦[‚ÆHHH
-                cam += w * conv_outputs[i, :, :]    # [CAM] ‚¦[‚ÆHHH
+        for i, w in enumerate(class_weights[:, 1]): # [CAM] ãˆãƒ¼ã¨ï¼Ÿï¼Ÿï¼Ÿ
+                cam += w * conv_outputs[i, :, :]    # [CAM] ãˆãƒ¼ã¨ï¼Ÿï¼Ÿï¼Ÿ
 
-        print "predictions", predictions
-        cam /= np.max(cam)                      # Å‘å’l‚Å³‹K‰»
-        cam = cv2.resize(cam, (height, width))  # opencv‚Ånumpy‚ğƒŠƒTƒCƒY
+        print("predictions", predictions)
+        cam /= np.max(cam)                      # æœ€å¤§å€¤ã§æ­£è¦åŒ–
+        cam = cv2.resize(cam, (height, width))  # opencvã§numpyã‚’ãƒªã‚µã‚¤ã‚º
         
-        heatmap = cv2.applyColorMap(np.uint8(255*cam), cv2.COLORMAP_JET) # ƒq[ƒgƒ}ƒbƒvB•Ö—˜I
-        heatmap[np.where(cam < 0.2)] = 0 # 0.2‚æ‚è¬‚ğØ‚èÌ‚Ä
-        img = heatmap*0.5 + original_img # ‰æ‘œ‚Æd‚Ë‚é
+        heatmap = cv2.applyColorMap(np.uint8(255*cam), cv2.COLORMAP_JET) # ãƒ’ãƒ¼ãƒˆãƒãƒƒãƒ—ã€‚ä¾¿åˆ©ï¼
+        heatmap[np.where(cam < 0.2)] = 0 # 0.2ã‚ˆã‚Šå°ã‚’åˆ‡ã‚Šæ¨ã¦
+        img = heatmap*0.5 + original_img # ç”»åƒã¨é‡ã­ã‚‹
         cv2.imwrite(output_path, img)
 
 def get_args():
@@ -76,8 +79,8 @@ def get_args():
     return args
 
 if __name__ == '__main__':
-	args = get_args()
-        if args.train:
-                train(args.dataset_path)
-        else:
-                visualize_class_activation_map(args.model_path, args.image_path, args.output_path)
+    args = get_args()
+    if(args.train):
+        train(args.dataset_path)
+    else:
+        visualize_class_activation_map(args.model_path, args.image_path, args.output_path)
